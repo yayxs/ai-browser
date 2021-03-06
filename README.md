@@ -1,17 +1,19 @@
 # browser-learn
 
-## 进程与线程
+## 浏览器之进程与线程
 
-### 1. 进程
+### 进程的基本概念
 
 程序的一次执行, 它占有一片独有的内存空间.是操作系统执行的**基本单元**。启动一个程序的时候，操作系统会为该程序创建一块内存，用来存放代码、运行中的数据和一个执行任务的主线程，我们把这样的一个运行环境叫进程。
+
+### 进程的特点
 
 - 一个进程中至少有一个运行的线程: 主线程, 进程启动后自动创建
 - 一个进程中也可以同时运行多个线程, 我们会说程序是多线程运行的
 - 一个进程内的数据可以供其中的多个线程直接共享，多个进程之间的数据是不能直接共享的
-- 进程之间相互隔离（不同的进程是通过IPC通信）
+- 进程之间相互隔离（不同的进程是通过 IPC 通信）
 
-#### 浏览器进程
+### 浏览器进程的体现
 
 - Browser 浏览器主进程
   浏览器的主进程,负责浏览器界面的显示,和各个页面的管理,浏览器中所有其他类型进程的祖先,负责其他进程的的创建和销毁 **它有且只有一个!!!!!**
@@ -26,20 +28,28 @@
   - GPU 演化成了 Browser 进程的一个线程
   - Renderer 进程演化成了操作系统的一个服务进程,它仍然是独立的
 
-### 2 .线程
+### 线程
 
 **是进程内的一个独立执行单元,是 CPU 调度的最小单元。程序运行的基本单元
 线程池(thread pool): 保存多个线程对象的容器, 实现线程对象的反复利用**
 
-**由于 jS 是单线程的，就牵扯到事件循环、事件轮询、event loop （省略先）**
+## Chrom最新浏览器架构
 
-
-
-## 三、HTTP 请求
-
-### 3 .HTTPS 和 HTTP
-
-## 四、HTTP 响应
+- 1个浏览器主进程
+  - 界面的显示
+  - 用户的交互
+  - 子进程管理
+  - 提供存储
+- 1个GPU进程
+  - 3D CSS 渲染
+- 1个网路进程
+  - 网络资源的加载
+- 多个渲染进程
+  - HTML+CSS+JS转换为可交互的网页
+  - 排版引擎 Blink
+  - JS V8
+- 多个插件进程
+  - 主要负责插件的运行
 
 ## 五、浏览器渲染原理
 
@@ -90,20 +100,20 @@
 - 绘图模块
   - 使用图形库将布局计算后的各个网页的节点绘制成图像结果
 
-#### (2). 渲染过程
+## 渲染引擎处理流程
 
 [渲染树的构建、布局、及绘制中文](https://developers.google.com/web/fundamentals/performance/critical-rendering-path/render-tree-construction?hl=zh-cn)
 
 ![20200407223600](https://raw.githubusercontent.com/yayxs/Pics/master/img/20200407223600.png)
 
 1.  遇见 HTML 标记，调用 HTML 解析器解析为对应的 token （一个 token 就是一个标签文本的序列化）并构建 DOM 树（就是一块内存，保存着 tokens，建立它们之间的关系）
-2.  遇见 style/link 标记 调用解析器 处理 CSS 标记并构建 CSS 样式树，即 CSSOM
-3.  遇见 script 标记 调用 javascript 解析器 处理 script 标记，绑定事件、修改 DOM 树/CSS 树 等
-4.  将 DOM 树 与 CSS 树 合并成一个渲染树
+2.  遇见 `style/link`标记 调用解析器 处理 CSS 标记并构建 CSS 样式树，即 CSSOM
+3.  遇见`script`标记 调用 `javascript`解析器 处理`script`标记，绑定事件、修改 DOM 树/CSS 树 等
+4.  将 `DOM `树 与 `CSS`树 合并成一个渲染树（render 树:after :before 这样的伪元素会在这个环节被构建到 DOM 树中）
 5.  根据渲染树来渲染，以计算每个节点的几何信息（这一过程需要依赖图形库）
-6.  将各个节点绘制到屏幕上。
+6.  **页面绘制** ： 把每一个页面图层转换为像素，对媒体文件进行解码。将各个节点绘制到屏幕上。
 
-### 5 .浏览器渲染阻塞
+## 浏览器渲染阻塞
 
 #### (1). CSS 样式渲染阻塞
 
@@ -111,13 +121,7 @@ link 引入的外部 css**才能够产生阻塞**
 
 #### (2). JS 阻塞
 
-## 六、性能优化
-
-### 1. 减少 HTTP 的请求
-
-### 2. 减少 DOM 的重绘与回流
-
-#### (1). 重绘
+## 重绘
 
 由于节点的几何属性发生改变或者由于样式发生改变而不会影响布局的，称为重绘，例如`outline`, `visibility`, `color`、`background-color`等，重绘的代价是高昂的，因为浏览器必须验证 DOM 树上其他节点元素的可见性。
 
@@ -194,46 +198,93 @@ link 引入的外部 css**才能够产生阻塞**
    - **避免频繁读取会引发回流/重绘的属性**，如果确实需要多次使用，就用一个变量缓存起来。
    - **对具有复杂动画的元素使用绝对定位**，使它脱离文档流，否则会引起父元素及后续元素频繁回流。
 
-<!-- web性能可以通过以下几方面来优化
-content方面
- 1、减少HTTP请求：合并文件、CSS精灵、inline Image
+## 事件循环 Event-loop
 
-2、减少DNS查询：DNS缓存、将资源分布到恰当数量的主机名
+事件循环：Event-loop（英文名）
 
-3、减少DOM元素数量
+## 考题
 
-Server方面
-1、使用CDN
+### 考题一
 
-2、配置ETag
+```js
+console.log(1) // 1
+setTimeout(function () {
+  // 异步任务一
+  console.log(2) //6
+})
+new Promise(function (resolve) {
+  console.log(3) //2
+  resolve()
+})
+  .then(function () {
+    // 异步任务
+    console.log(4) //4
+  })
+  .then(function () {
+    // 异步任务
+    console.log(5) //5
+  })
+console.log(6) //3
+```
 
-3、对组件使用Gzip压缩
+### 考题二
 
-Cookie方面
-1、减小cookie大小
+```js
+Promise.resolve()
+  .then(function () {
+    console.log('promise1')
+  })
+  .then(function () {
+    console.log('promise2')
+  })
 
-2、css方面
+process.nextTick(() => {
+  console.log('nextTick1')
+  process.nextTick(() => {
+    console.log('nextTick2')
+    process.nextTick(() => {
+      console.log('nextTick3')
+      process.nextTick(() => {
+        console.log('nextTick4')
+      })
+    })
+  })
+})
+```
 
-3、将样式表放到页面顶部
+### 考题三
 
-4、不使用CSS表达式
+```js
+setTimeout(() => {
+  console.log('timeout1')
+}, 0)
 
-5、使用<link>不使用@import
+setTimeout(() => {
+  console.log('timeout2')
+  Promise.resolve().then(function () {
+    console.log('promise1')
+  })
+}, 0)
 
-Javascript方面
-1、将脚本放到页面底部
+setTimeout(() => {
+  console.log('timeout3')
+}, 0)
+```
 
-2、将javascript和css从外部引入
+## 从输入 URL 到页面加载完成，发生了什么？
 
-3、压缩javascript和css
+![20200407214919](https://raw.githubusercontent.com/yayxs/Pics/master/img/20200407214919.png)
 
-4、删除不需要的脚本
+## 常见的浏览器内核
 
-5、减少DOM访问
+[参考阅读百度百科](<[https://baike.baidu.com/item/%E6%B5%8F%E8%A7%88%E5%99%A8%E5%86%85%E6%A0%B8](https://baike.baidu.com/item/浏览器内核)>)
 
-图片方面
-1、优化图片：根据实际颜色需要选择色深、压缩
+> 浏览器最重要或者说核心的部分是“Rendering Engine”，可大概译为“渲染引擎”，不过我们一般习惯将之称为“浏览器内核”。
 
-2、优化css精灵
+**不同的浏览器内核对网页编写语法的解释也有不同，因此同一网页在不同的内核的浏览器里的渲染（显示）效果也可能不同，这也是网页编写者需要在不同内核的浏览器中测试网页显示效果的原因。**
 
-3、不要在HTML中拉伸图片 -->
+| 内核分类           | 采用该内核的浏览器                                                                                                                                                                     |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Trident（**IE**）  | IE、傲游、世界之窗浏览器、Avant、腾讯 TT、Sleipnir、GOSURF、GreenBrowser 和 KKman 等。                                                                                                 |
+| Gecko(**火狐**)    | [Mozilla Firefox](https://baike.baidu.com/item/Mozilla Firefox)、Mozilla SeaMonkey、waterfox（Firefox 的 64 位开源版）、Iceweasel、Epiphany（早期版本）、Flock（早期版本）、K-Meleon。 |
+| Webkit（**谷歌**） | Google Chrome、[360 极速浏览器](https://baike.baidu.com/item/360极速浏览器)以及[搜狗高速浏览器](https://baike.baidu.com/item/搜狗高速浏览器)高速模式也使用 Webkit 作为内核             |
