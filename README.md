@@ -33,25 +33,26 @@
 **是进程内的一个独立执行单元,是 CPU 调度的最小单元。程序运行的基本单元
 线程池(thread pool): 保存多个线程对象的容器, 实现线程对象的反复利用**
 
-## Chrom最新浏览器架构
+## Chrom 最新浏览器架构
 
-- 1个浏览器主进程
+- 1 个浏览器主进程
   - 界面的显示
   - 用户的交互
   - 子进程管理
   - 提供存储
-- 1个GPU进程
+- 1 个 GPU 进程
   - 3D CSS 渲染
-- 1个网路进程
+- 1 个网路进程
   - 网络资源的加载
+  - 面向渲染进程和浏览器进程 等提供网络下载
 - 多个渲染进程
-  - HTML+CSS+JS转换为可交互的网页
+  - HTML+CSS+JS 转换为可交互的网页
   - 排版引擎 Blink
   - JS V8
 - 多个插件进程
   - 主要负责插件的运行
 
-## 五、浏览器渲染原理
+## 浏览器渲染原理
 
 ![20200407221502](https://raw.githubusercontent.com/yayxs/Pics/master/img/20200407221502.png)
 
@@ -202,78 +203,51 @@ link 引入的外部 css**才能够产生阻塞**
 
 事件循环：Event-loop（英文名）
 
-## 考题
+## 从输入`URL`到页面加载完成，发生了什么？
 
-### 考题一
-
-```js
-console.log(1) // 1
-setTimeout(function () {
-  // 异步任务一
-  console.log(2) //6
-})
-new Promise(function (resolve) {
-  console.log(3) //2
-  resolve()
-})
-  .then(function () {
-    // 异步任务
-    console.log(4) //4
-  })
-  .then(function () {
-    // 异步任务
-    console.log(5) //5
-  })
-console.log(6) //3
-```
-
-### 考题二
-
-```js
-Promise.resolve()
-  .then(function () {
-    console.log('promise1')
-  })
-  .then(function () {
-    console.log('promise2')
-  })
-
-process.nextTick(() => {
-  console.log('nextTick1')
-  process.nextTick(() => {
-    console.log('nextTick2')
-    process.nextTick(() => {
-      console.log('nextTick3')
-      process.nextTick(() => {
-        console.log('nextTick4')
-      })
-    })
-  })
-})
-```
-
-### 考题三
-
-```js
-setTimeout(() => {
-  console.log('timeout1')
-}, 0)
-
-setTimeout(() => {
-  console.log('timeout2')
-  Promise.resolve().then(function () {
-    console.log('promise1')
-  })
-}, 0)
-
-setTimeout(() => {
-  console.log('timeout3')
-}, 0)
-```
-
-## 从输入 URL 到页面加载完成，发生了什么？
+如下图所示，当在浏览器地址栏输入一个地址的时候，发生了什么呢
 
 ![20200407214919](https://raw.githubusercontent.com/yayxs/Pics/master/img/20200407214919.png)
+
+### `导航`流程
+
+- 浏览器进程收到用户输入的URL请求 
+  - 浏览器进程将URL转发给网络进程
+- 在网络进程中发起真正的URL请求
+- 网络进程接收到了额响应头的数据 
+  - 解析响应头的数据
+  - 将数据转发给浏览器进程
+- 浏览器接到网络进程的响应头之后 发送提交导航 消息到渲染进程
+- 渲染进程节后到消息 然后准备HTML数据 接收数据的方式是直接个网络进程建立数据管道
+- 渲染进程会向浏览器进程确认提交 
+- 浏览器进程接收到渲染进程的消息之后 移除旧的文档 然后更新浏览器进程中的状态
+
+### 页面的展示
+
+1、用户的输入
+
+- 判断地址栏是否是搜索内容 还是请求的URL
+  - 搜索内容的话 就是搜索关键字
+  - 如果是符合URL规则的话 合成完整的URL
+
+2、URL的请求过程
+
+- 首先网络进程查找本地的魂村是否缓存了该资源 
+  - 缓存了 直接返回资源给浏览器进程
+  - 如果在缓存中没有查找到 直接进入网络请求的流程
+
+- 请求前的第一步就是进行DNS解析 然后获取请求域名的服务器IP地址如果是HTTPS还需要建立TLS连接
+
+- 利用IP地址和服务器建立`TCP`连接
+
+- 浏览器端构建请求行、请求头信息 并把和该域名相关的Cookie 等数据附加到请求头中 然后向服务器发送构建的请求信息
+- 服务器接收请求信息 根据请求信息生成响应的数据（响应行、响应头、响应体）
+- 网络进程进行解析响应头的内容
+- 重定向
+  - 接收到服务器的响应头，网络进程开始解析响应头
+    - 301/302 重定向其他的URL **有一个地址 是Locatiopn字段**
+- 响应数据的处理
+  - `Content-Type` ：告诉浏览器服务器返回的响应体数据是什么类型
 
 ## 常见的浏览器内核
 
@@ -288,3 +262,72 @@ setTimeout(() => {
 | Trident（**IE**）  | IE、傲游、世界之窗浏览器、Avant、腾讯 TT、Sleipnir、GOSURF、GreenBrowser 和 KKman 等。                                                                                                 |
 | Gecko(**火狐**)    | [Mozilla Firefox](https://baike.baidu.com/item/Mozilla Firefox)、Mozilla SeaMonkey、waterfox（Firefox 的 64 位开源版）、Iceweasel、Epiphany（早期版本）、Flock（早期版本）、K-Meleon。 |
 | Webkit（**谷歌**） | Google Chrome、[360 极速浏览器](https://baike.baidu.com/item/360极速浏览器)以及[搜狗高速浏览器](https://baike.baidu.com/item/搜狗高速浏览器)高速模式也使用 Webkit 作为内核             |
+
+## 考题
+
+### 考题一
+
+```js
+console.log(1); // 1
+setTimeout(function () {
+  // 异步任务一
+  console.log(2); //6
+});
+new Promise(function (resolve) {
+  console.log(3); //2
+  resolve();
+})
+  .then(function () {
+    // 异步任务
+    console.log(4); //4
+  })
+  .then(function () {
+    // 异步任务
+    console.log(5); //5
+  });
+console.log(6); //3
+```
+
+### 考题二
+
+```js
+Promise.resolve()
+  .then(function () {
+    console.log("promise1");
+  })
+  .then(function () {
+    console.log("promise2");
+  });
+
+process.nextTick(() => {
+  console.log("nextTick1");
+  process.nextTick(() => {
+    console.log("nextTick2");
+    process.nextTick(() => {
+      console.log("nextTick3");
+      process.nextTick(() => {
+        console.log("nextTick4");
+      });
+    });
+  });
+});
+```
+
+### 考题三
+
+```js
+setTimeout(() => {
+  console.log("timeout1");
+}, 0);
+
+setTimeout(() => {
+  console.log("timeout2");
+  Promise.resolve().then(function () {
+    console.log("promise1");
+  });
+}, 0);
+
+setTimeout(() => {
+  console.log("timeout3");
+}, 0);
+```
