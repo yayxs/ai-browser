@@ -72,7 +72,7 @@
 
 - 等等……
 
-### 3. 浏览器渲染机制
+## 浏览器渲染流程
 
 - 浏览器采用流式布局模型（`Flow Based Layout`）
 - 浏览器会把`HTML`解析成`DOM`，把`CSS`解析成`CSSOM`，`DOM`和`CSSOM`合并就产生了渲染树（`Render Tree`）。
