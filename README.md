@@ -329,80 +329,38 @@ foo()
 
 **所谓的变量提升，是指在 JavaScript 代码执行过程中，JavaScript 引擎把变量的声明部分和函数的声明部分提升到代码开头的“行为”。变量被提升后，会给变量设置默认值，这个默认值就是我们熟悉的 undefined**
 
-## 执行上下文
+# 执行上下文
 
-执行上下文又叫做上下文，每个上下文都有一个关联的大对象，上下文中定义的变量和函数都存在于这个大对象上,当函数被调用的时候，会创建一个活动记录
+输入一段代码，经过编译后，会生成两部分内容：执行上下文（Execution context）和可执行代码。
+
+1.  执行上下文又叫做上下文，
+2.  每个上下文都有一个关联的大对象，上下文中定义的变量和函数都存在于这个大对象上, 这个对象是 （Viriable Environment ） 1. 这个度一项保存了变量提升的内容 2.
+3.  ```js
+    VariableEnvironment:
+    myname -> undefined,
+    showName ->function : {console.log(myname)
+
+    ```
+
+4.  当函数被调用的时候，会创建一个活动记录 / 进入函数的执行上下文 确定执行期间用到的 this 变量、 对象 以及函数等
+5.  是 JS 执行一段代码运行时的运行环境
 
 - 全局上下文 根据当前代码所处的环境有所不同，在浏览器环境就是 window ,正是由于全局上下文是 window 所有通过 var 声明的变量和函数 将会成为 window 的属性和方法，关闭网页退出浏览器 全局上下文就会被销毁了
 - 函数上下文 函数调用栈
 
 - eval()调用内部存在第三种上下文
 
-## 考题
-
-### 考题一
-
 ```js
-console.log(1) // 1
-setTimeout(function () {
-  // 异步任务一
-  console.log(2) //6
-})
-new Promise(function (resolve) {
-  console.log(3) //2
-  resolve()
-})
-  .then(function () {
-    // 异步任务
-    console.log(4) //4
-  })
-  .then(function () {
-    // 异步任务
-    console.log(5) //5
-  })
-console.log(6) //3
+showName() // 1
+console.log(myName) // 2
+var myName = `vast` //3
+
+function showName() {
+  // 4
+  console.log(`showName 执行`)
+}
 ```
 
-### 考题二
-
-```js
-Promise.resolve()
-  .then(function () {
-    console.log('promise1')
-  })
-  .then(function () {
-    console.log('promise2')
-  })
-
-process.nextTick(() => {
-  console.log('nextTick1')
-  process.nextTick(() => {
-    console.log('nextTick2')
-    process.nextTick(() => {
-      console.log('nextTick3')
-      process.nextTick(() => {
-        console.log('nextTick4')
-      })
-    })
-  })
-})
-```
-
-### 考题三
-
-```js
-setTimeout(() => {
-  console.log('timeout1')
-}, 0)
-
-setTimeout(() => {
-  console.log('timeout2')
-  Promise.resolve().then(function () {
-    console.log('promise1')
-  })
-}, 0)
-
-setTimeout(() => {
-  console.log('timeout3')
-}, 0)
-```
+- 1 和 2 JS 引擎不会做任何处理
+- 3 在环境对象中创建一个名为`myname` 的属性 然后赋值为 undefined
+- 4 将函数定义存储到堆（HEAP） 中 环境变量中创建一个`showName` 的属性 然后将属性值指向堆中的函数的位置
